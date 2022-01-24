@@ -29,4 +29,22 @@ words = panagram.split()
 print(words)
 
 numbers = "9,223,372,036,543,312,453"
-print(sum(numbers.split(",")))
+print(numbers.split(","))
+values = ''.join(numbers)
+print(values)
+values_list = values.split()
+print(values_list)
+
+#  I'll change data type for 'numbers' list to int
+
+intlist = []
+for number in numbers:
+    no = "".join(number)
+    if no == ',':
+        continue
+    else:
+        integer = int(no)
+        print(type(integer))
+        print(integer)
+        intlist.append(integer)
+print(intlist)
