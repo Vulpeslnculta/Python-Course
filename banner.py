@@ -1,11 +1,13 @@
-def banner_text(text=" ", screen_width=80):
+def banner_text(text=" ", screen_width=80) -> None:
     """
     Formatting text into form of banner.
-    
-        :param text: Given text to format, line must be shorter than screen_width
-        :param screen_width: Defines maximum length of one line of text
+
+        :param text: Given text to format, line must be shorter than screen_width, must be a string
+        :param screen_width: Defines maximum length of one line of text in form of int
 
         :return: Formatted text in form of banner with asterisks as frame
+
+        :raises ValueError: if the supplied string is too long to fit.
     """
     if len(text) > screen_width - 4:
         raise ValueError("String {} is larger than specified width {}"
