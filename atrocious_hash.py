@@ -16,6 +16,14 @@ def simple_hash(s:str) -> int:
     return basic_hash % 10
 
 
+def get(k: str) -> str:
+    hash_code = simple_hash(k)
+    if values[hash_code]:
+        return values[hash_code]
+    else:
+        return None
+
+
 keys = [""] * 10
 values = keys.copy()
 
@@ -26,3 +34,8 @@ for key, value in data:
     values[h] = value
 print(keys)
 print(values)
+print()
+value = get("lemon")
+print(value)
+value = get("tomato")
+print(value)
