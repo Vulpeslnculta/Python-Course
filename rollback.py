@@ -5,12 +5,16 @@ import pytz
 
 db = sqlite3.connect("accounts.sqlite")
 db.execute("CREATE TABLE IF NOT EXISTS accounts (name TEXT PRIMARY KEY NOT NULL, balance INTEGER NOT NULL)")
-db.execute("CREATE TABLE IF NOT EXISTS transactions (time TIMESTAMP NOT NULL, account TEXT NOT NULL,"
+db.execute("CREATE TABLE IF NOT EXISTS history (time TIMESTAMP NOT NULL, account TEXT NOT NULL,"
            "amount INTEGER NOT NULL, PRIMARY KEY (time, account))")
 
 
 class Account(object):
     _qb = Decimal('0.00')
+
+    @staticmethod
+    def _current_time():
+        return pytz.utc.localize(datetime.datetime.utcnow())
 
     def __init__(self, name: str, opening_balance: float = 0.0):
         cursor = db.execute("SELECT name, balance FROM accounts WHERE (name =?)", (name,))
@@ -24,25 +28,39 @@ class Account(object):
             self._balance = Decimal(opening_balance).quantize(Account._qb)
             cursor.execute("INSERT INTO accounts VALUES (?, ?)", (name, opening_balance))
             cursor.connection.commit()
-        print("Account created for {}.".format(self.name), end="")
+            print("Account created for {}. ".format(self.name), end="")
         self.show_balance()
+
+    def _save_update(self, amount):
+        new_balance = round(self._balance + float(amount), 2)
+        deposit_time = Account._current_time()
+        db.execute("UPDATE accounts SET balance = ? WHERE (name = ?)", (new_balance, self.name))
+        db.execute("INSERT INTO history VALUES(?, ?, ?)", (deposit_time, str(self.name), round(float(amount), 2)))
+        db.commit()
+        self._balance = new_balance
 
     def deposit(self, amount: float) -> Decimal:
         decimal_amount = Decimal(amount).quantize(Account._qb)
         if decimal_amount > Account._qb:
-            new_balance = self._balance + int(decimal_amount)
-            deposit_time = pytz.utc.localize(datetime.datetime.utcnow())
-            db.execute("UPDATE accounts SET balance = ? WHERE name = ?", (float(new_balance), self.name,))
-            db.execute("INSERT INTO history VALUES(?, ?, ?)", (deposit_time, self.name, amount,))
-            db.commit()
-            self._balance = new_balance
+            # new_balance = self._balance + float(decimal_amount)
+            # deposit_time = Account._current_time(self)
+            # db.execute("UPDATE accounts SET balance = ? WHERE name = ?", (float(new_balance), self.name,))
+            # db.execute("INSERT INTO history VALUES(?, ?, ?)", (deposit_time, self.name, amount,))
+            # db.commit()
+            # self._balance = new_balance
+            self._save_update(decimal_amount)
             print("{} deposited".format(decimal_amount))
+            round(self._balance, 2)
         return self._balance
 
     def withdraw(self, amount: float) -> Decimal:
         decimal_amount = Decimal(amount).quantize(Account._qb)
         if Account._qb < decimal_amount <= self._balance:
-            self._balance -= self._balance - int(decimal_amount)
+            # new_balance = round((self._balance - float(decimal_amount)), 2)
+            # withdrawal_time = Account._current_time(self)
+            # db.execute("UPDATE accounts SET balance = ? WHERE (name=?)", (new_balance, self.name))
+            # db.execute("INSERT INTO history VALUES(?, ?, ?)", (withdrawal_time, -amount, self.name))
+            self._save_update(-decimal_amount)
             print("{} withdrawn".format(amount))
             return decimal_amount
         else:
@@ -55,9 +73,9 @@ class Account(object):
 
 if __name__ == '__main__':
     john = Account("John")
-    john.deposit(100.10)
-    john.withdraw(200.05)
-    john.deposit(200)
+    john.deposit(100.05)
+    john.withdraw(200.15)
+    john.deposit(200.05)
     john.withdraw(300)
     john.show_balance()
 
